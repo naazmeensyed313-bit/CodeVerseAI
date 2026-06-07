@@ -92,33 +92,22 @@ Watch the complete project demonstration here:
 ## Project Architecture
 
 ```text
+## Project Architecture
+
 CodeVerseAI
+│
+├── Frontend
+│   ├── Dashboard
+│   ├── Algorithm Visualizer
+│   ├── Memory & CPU Simulator
+│   └── SQL Playground
 │
 ├── Backend
 │   ├── Flask Application
-│   ├── Routing
-│   ├── API Services
-│   └── AI Tutor Integration
+│   ├── REST APIs
+│   └── OpenAI Tutor Services
 │
-├── Dashboard
-│   └── Interactive Learning Hub
-│
-├── Algorithm Visualizer
-│   ├── 3D Visualizations
-│   ├── Algorithm Engine
-│   └── AI Tutor
-│
-├── Memory & CPU Simulator
-│   ├── Memory Engine
-│   ├── Process Simulation
-│   └── AI Tutor
-│
-└── SQL Playground
-    ├── Query Execution
-    ├── Progress Tracking
-    ├── Quiz System
-    └── AI Tutor
-```
+└── OpenAI API Integration
 
 ## Learning Objectives
 
