@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeVerse AI - SQL Playground</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sql/sql.css') }}">
+</head>
+
+<body class="min-h-screen p-5 text-white lg:p-10">
+    <div id="toastRegion" class="fixed right-4 top-4 z-50 grid max-w-sm gap-3" aria-live="polite"></div>
+
+    <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <a href="/" class="w-fit rounded-2xl glass px-5 py-3 transition hover:bg-white/10">Back</a>
+        <div class="flex flex-wrap gap-3">
+            <button type="button" data-action="load-challenge" class="rounded-2xl border border-white/20 px-5 py-3 transition hover:bg-white/5">Next Challenge</button>
+            <button type="button" data-action="reset-progress" class="rounded-2xl border border-white/20 px-5 py-3 transition hover:bg-white/5">Reset Progress</button>
+        </div>
+    </div>
+
+    <section class="mb-10">
+        <h1 class="mb-5 text-4xl font-bold leading-tight md:text-6xl">SQL Playground</h1>
+        <p class="max-w-4xl text-lg leading-relaxed text-gray-400">
+            Learn SQL by writing real SQLite queries, watching execution steps unfold, exploring joins in 3D, and earning progress through guided practice.
+        </p>
+        <div class="mt-6 flex flex-wrap gap-3">
+            <span class="feature-pill rounded-full px-4 py-2 text-sm text-purple-100">Monaco editor</span>
+            <span class="feature-pill rounded-full px-4 py-2 text-sm text-purple-100">Real sql.js engine</span>
+            <span class="feature-pill rounded-full px-4 py-2 text-sm text-purple-100">3D table joins</span>
+            <span class="feature-pill rounded-full px-4 py-2 text-sm text-purple-100">AI tutor</span>
+            <span class="feature-pill rounded-full px-4 py-2 text-sm text-purple-100">XP badges</span>
+            <span class="feature-pill rounded-full px-4 py-2 text-sm text-purple-100">Charts</span>
+        </div>
+    </section>
+
+    <section class="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_380px]">
+        <main class="glass rounded-[32px] p-5 shadow-2xl shadow-purple-500/10 lg:p-8">
+            <div class="mb-6 flex flex-wrap gap-3" role="tablist" aria-label="SQL Playground tabs">
+                <button type="button" class="tab-btn active rounded-2xl px-5 py-3 transition" data-action="switch-tab" data-tab="learn">Learn</button>
+                <button type="button" class="tab-btn rounded-2xl px-5 py-3 transition" data-action="switch-tab" data-tab="practice">Practice</button>
+                <button type="button" class="tab-btn rounded-2xl px-5 py-3 transition" data-action="switch-tab" data-tab="challenge">Challenge</button>
+                <button type="button" class="tab-btn rounded-2xl px-5 py-3 transition" data-action="switch-tab" data-tab="quiz">Quiz</button>
+            </div>
+
+            <section id="learnTab" class="tab-panel">
+                <div class="grid gap-4 md:grid-cols-3">
+                    <article class="metric rounded-3xl p-5 transition hover:-translate-y-1">
+                        <p class="mb-2 text-lg font-semibold">students</p>
+                        <p class="text-sm text-gray-400">id, name, course_id, score, city</p>
+                    </article>
+                    <article class="metric rounded-3xl p-5 transition hover:-translate-y-1">
+                        <p class="mb-2 text-lg font-semibold">courses</p>
+                        <p class="text-sm text-gray-400">id, title, level, credits</p>
+                    </article>
+                    <article class="metric rounded-3xl p-5 transition hover:-translate-y-1">
+                        <p class="mb-2 text-lg font-semibold">enrollments</p>
+                        <p class="text-sm text-gray-400">id, student_id, course_id, status</p>
+                    </article>
+                </div>
+
+                <div class="scene-shell mt-6 rounded-[28px] border border-white/10 bg-black/20 p-4">
+                    <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <p id="sceneStatus" class="text-sm text-gray-300">3D database ready</p>
+                        <p class="text-xs text-gray-500">Green scanner = active SQL step. Yellow particles = JOIN data flow.</p>
+                    </div>
+                    <div id="dbScene" class="rounded-[24px]"></div>
+                </div>
+
+                <div class="mt-6 grid gap-4 lg:grid-cols-2">
+                    <button type="button" data-action="select-concept" data-concept="SELECT" class="metric rounded-3xl p-5 text-left transition hover:bg-white/10">SELECT <span class="block text-sm text-gray-400">Choose the columns you want to return.</span></button>
+                    <button type="button" data-action="select-concept" data-concept="WHERE" class="metric rounded-3xl p-5 text-left transition hover:bg-white/10">WHERE <span class="block text-sm text-gray-400">Filter rows using conditions.</span></button>
+                    <button type="button" data-action="select-concept" data-concept="GROUP BY" class="metric rounded-3xl p-5 text-left transition hover:bg-white/10">GROUP BY <span class="block text-sm text-gray-400">Collect rows into meaningful groups.</span></button>
+                    <button type="button" data-action="select-concept" data-concept="JOIN" class="metric rounded-3xl p-5 text-left transition hover:bg-white/10">JOIN <span class="block text-sm text-gray-400">Connect related tables through keys.</span></button>
+                </div>
+            </section>
+
+            <section id="practiceTab" class="tab-panel hidden">
+                <div class="mb-5 rounded-3xl border border-white/10 bg-black/20 p-5">
+                    <p class="text-sm uppercase tracking-[0.18em] text-purple-200">Current Goal</p>
+                    <p id="challengeText" class="mt-2 text-xl font-semibold text-white"></p>
+                </div>
+
+                <div id="editor" class="border border-white/10" aria-label="SQL editor"></div>
+                <div class="mt-4 flex flex-wrap gap-3">
+                    <button type="button" data-action="run-query" id="runQueryBtn" class="rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 px-5 py-3 font-semibold transition hover:scale-105">Run Query</button>
+                    <button type="button" data-action="fill-answer" class="rounded-2xl border border-white/20 px-5 py-3 transition hover:bg-white/5">Show Pattern</button>
+                    <button type="button" data-action="load-challenge" class="rounded-2xl border border-white/20 px-5 py-3 transition hover:bg-white/5">Next Challenge</button>
+                    <button type="button" data-action="explain-query" class="rounded-2xl border border-white/20 px-5 py-3 transition hover:bg-white/5">Explain</button>
+                    <button type="button" data-action="fix-query" class="rounded-2xl border border-white/20 px-5 py-3 transition hover:bg-white/5">Fix Query</button>
+                </div>
+                <p class="mt-3 text-xs text-gray-500">Shortcut: Ctrl+Enter runs the current query.</p>
+
+                <div class="mt-6 grid gap-6 lg:grid-cols-[0.86fr_1.14fr]">
+                    <div class="rounded-3xl border border-white/10 bg-black/20 p-5">
+                        <h2 class="mb-4 text-2xl font-semibold">Execution Flow</h2>
+                        <div id="executionSteps" class="space-y-3"></div>
+                    </div>
+                    <div class="overflow-hidden rounded-3xl border border-white/10">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-white/10 text-gray-300" id="resultHead"></thead>
+                            <tbody class="divide-y divide-white/10 bg-black/20" id="resultBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid gap-6 lg:grid-cols-2">
+                    <div class="glass rounded-3xl p-6">
+                        <div class="mb-3 flex items-center justify-between gap-4">
+                            <h2 class="text-2xl font-semibold">AI Explanation</h2>
+                            <button type="button" data-action="toggle-voice" id="sqlVoiceBtn"
+                                class="rounded-xl border border-white/15 px-4 py-2 text-sm transition hover:bg-white/5"
+                                aria-pressed="false">
+                                Voice Off
+                            </button>
+                        </div>
+                        <p id="sqlExplanation" class="min-h-[130px] leading-relaxed text-gray-400">
+                            Pick a challenge and run a query. The tutor will explain how SQL scans, filters, joins, and returns rows.
+                        </p>
+                    </div>
+                    <div class="glass rounded-3xl p-6">
+                        <h2 class="mb-2 text-2xl font-semibold">Result Chart</h2>
+                        <p id="chartHelp" class="chart-note mb-4 text-sm leading-relaxed text-gray-400">
+                            Charts appear only when the result has numbers to compare, like scores, COUNT totals, or AVG values.
+                        </p>
+                        <div class="relative h-[220px]">
+                            <canvas id="resultChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="challengeTab" class="tab-panel hidden">
+                <div class="grid gap-4 md:grid-cols-2">
+                    <article class="metric rounded-3xl p-5" data-concept-card="SELECT"></article>
+                    <article class="metric rounded-3xl p-5" data-concept-card="WHERE"></article>
+                    <article class="metric rounded-3xl p-5" data-concept-card="ORDER BY"></article>
+                    <article class="metric rounded-3xl p-5" data-concept-card="GROUP BY"></article>
+                    <article class="metric rounded-3xl p-5" data-concept-card="COUNT"></article>
+                    <article class="metric rounded-3xl p-5" data-concept-card="AVG"></article>
+                    <article class="metric rounded-3xl p-5" data-concept-card="INNER JOIN"></article>
+                    <article class="metric rounded-3xl p-5" data-concept-card="LEFT JOIN"></article>
+                    <article class="metric rounded-3xl p-5" data-concept-card="INSERT"></article>
+                    <article class="metric rounded-3xl p-5" data-concept-card="UPDATE"></article>
+                    <article class="metric rounded-3xl p-5" data-concept-card="DELETE"></article>
+                </div>
+            </section>
+
+            <section id="quizTab" class="tab-panel hidden">
+                <div class="glass rounded-3xl p-6">
+                    <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <h2 class="text-2xl font-semibold">Quick Quiz</h2>
+                        <p id="quizCounter" class="text-sm text-gray-400">Question 1</p>
+                    </div>
+                    <p id="quizQuestion" class="mb-5 text-lg text-gray-200"></p>
+                    <div id="quizOptions" class="grid gap-3"></div>
+                    <p id="sqlQuiz" class="mt-4 min-h-[28px] text-sm text-gray-400"></p>
+                </div>
+            </section>
+        </main>
+
+        <aside class="space-y-6">
+            <div class="glass rounded-3xl p-6">
+                <div class="mb-4 flex items-center justify-between gap-4">
+                    <h2 class="text-2xl font-semibold">Progress</h2>
+                    <p id="levelText" class="text-xl font-bold text-green-400">Lv 1</p>
+                </div>
+                <div class="h-3 overflow-hidden rounded-full bg-white/10">
+                    <div id="xpBar" class="h-full w-0 rounded-full bg-gradient-to-r from-green-400 to-sky-400 transition-all duration-500"></div>
+                </div>
+                <div class="mt-4 grid grid-cols-3 gap-3 text-center text-xs text-gray-400">
+                    <div class="metric rounded-2xl p-3">
+                        <p id="xpText" class="font-semibold text-white">0</p>
+                        <p>XP</p>
+                    </div>
+                    <div class="metric rounded-2xl p-3">
+                        <p id="sqlScore" class="font-semibold text-white">0/0</p>
+                        <p>Score</p>
+                    </div>
+                    <div class="metric rounded-2xl p-3">
+                        <p id="streakText" class="font-semibold text-white">0</p>
+                        <p>Streak</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass rounded-3xl p-6">
+                <h2 class="mb-4 text-2xl font-semibold">Achievements</h2>
+                <div class="grid gap-3 text-sm">
+                    <div id="badgeFirstRun" class="badge rounded-2xl border border-white/10 bg-black/20 p-3 text-gray-400">First Query</div>
+                    <div id="badgeJoin" class="badge rounded-2xl border border-white/10 bg-black/20 p-3 text-gray-400">Join Explorer</div>
+                    <div id="badgeAggregate" class="badge rounded-2xl border border-white/10 bg-black/20 p-3 text-gray-400">Aggregate Analyst</div>
+                    <div id="badgeLevel" class="badge rounded-2xl border border-white/10 bg-black/20 p-3 text-gray-400">Level 3 Scholar</div>
+                </div>
+            </div>
+
+            <div class="glass rounded-3xl p-6">
+                <h2 class="mb-4 text-2xl font-semibold">Query Hints</h2>
+                <ul class="space-y-3 text-sm text-gray-400">
+                    <li><code>SELECT</code> chooses columns from a result.</li>
+                    <li><code>WHERE</code> removes rows that fail a condition.</li>
+                    <li><code>GROUP BY</code> works with <code>COUNT</code> and <code>AVG</code>.</li>
+                    <li><code>JOIN</code> matches related keys across tables.</li>
+                </ul>
+            </div>
+
+            <div class="glass rounded-3xl p-6">
+                <h2 class="mb-4 text-2xl font-semibold">Ask AI Doubt</h2>
+                <input id="doubtInput" type="search" placeholder="Ask about joins, WHERE, GROUP BY..."
+                    class="mb-3 w-full rounded-2xl border border-white/10 bg-[#161622] p-4 text-white outline-none">
+                <button type="button" data-action="ask-doubt" id="askDoubtBtn" class="w-full rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 px-5 py-3 font-semibold transition hover:scale-105">Ask</button>
+                <p id="doubtAnswer" class="mt-4 min-h-[90px] text-sm leading-relaxed text-gray-400">Ask a doubt from your current query or concept.</p>
+            </div>
+        </aside>
+    </section>
+
+    <script type="module" src="{{ url_for('static', filename='js/sql/sql-main.js') }}"></script>
+</body>
+
+</html>

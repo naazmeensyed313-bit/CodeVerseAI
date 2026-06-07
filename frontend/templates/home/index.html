@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeVerseAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home/style.css') }}">
+</head>
+<body>
+
+    <!-- BACKGROUND -->
+    <div class="bg-grid"></div>
+    <div class="glow glow1"></div>
+    <div class="glow glow2"></div>
+    <div class="glow glow3"></div>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="nav-brand">Code<span>Verse</span><span class="brand-ai">AI</span></div>
+        <div class="nav-links">
+            <a href="/" class="active">Home</a>
+            <a href="/algorithms">Algorithms</a>
+            <a href="/memory">Memory</a>
+            <a href="/sql">SQL</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="welcome-text">Welcome back! 🔥</div>
+            <h1 class="hero-title">
+                Code<span class="gradient-text">VerseAI</span>
+            </h1>
+            <p class="hero-subtitle">
+                AI-Powered Interactive Learning Application for Computer Science
+            </p>
+        </div>
+    </section>
+
+    <!-- PROGRESS SECTION -->
+    <section class="progress-section">
+        <div class="progress-box">
+            <div class="progress-box-header">
+                <span class="progress-box-title">📊 Your Progress</span>
+                <div class="overall-progress-wrap">
+                    <span class="overall-label">Overall</span>
+                    <div class="overall-bar">
+                        <div class="overall-fill" id="overall-fill"></div>
+                    </div>
+                    <span class="overall-pct" id="overall-pct">0%</span>
+                </div>
+            </div>
+            <div class="progress-grid">
+
+                <!-- Algorithms -->
+                <div class="progress-card">
+                    <div class="progress-card-left">
+                        <div class="progress-icon algo-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="#a855f7"/>
+                            </svg>
+                        </div>
+                        <div class="progress-info">
+                            <h3>Algorithms</h3>
+                            <div class="bar">
+                                <div class="fill a" style="--target:65%"></div>
+                            </div>
+                            <p class="pct-label algo-color">65% Completed</p>
+                        </div>
+                    </div>
+                    <div class="progress-ring" data-pct="65">
+                        <svg viewBox="0 0 56 56" width="56" height="56">
+                            <circle class="ring-bg" cx="28" cy="28" r="23" />
+                            <circle class="ring-fill algo-ring" cx="28" cy="28" r="23" stroke-dasharray="144.5" stroke-dashoffset="50.6" />
+                        </svg>
+                        <span class="ring-label">65%</span>
+                    </div>
+                </div>
+
+                <!-- Memory System -->
+                <div class="progress-card">
+                    <div class="progress-card-left">
+                        <div class="progress-icon mem-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                                <rect x="2" y="7" width="20" height="10" rx="2" stroke="#a855f7" stroke-width="2"/>
+                                <line x1="6" y1="7" x2="6" y2="17" stroke="#a855f7" stroke-width="1.5"/>
+                                <line x1="10" y1="7" x2="10" y2="17" stroke="#a855f7" stroke-width="1.5"/>
+                                <line x1="14" y1="7" x2="14" y2="17" stroke="#a855f7" stroke-width="1.5"/>
+                                <line x1="18" y1="7" x2="18" y2="17" stroke="#a855f7" stroke-width="1.5"/>
+                            </svg>
+                        </div>
+                        <div class="progress-info">
+                            <h3>Memory System</h3>
+                            <div class="bar">
+                                <div class="fill m" style="--target:40%"></div>
+                            </div>
+                            <p class="pct-label mem-color">40% Completed</p>
+                        </div>
+                    </div>
+                    <div class="progress-ring" data-pct="40">
+                        <svg viewBox="0 0 56 56" width="56" height="56">
+                            <circle class="ring-bg" cx="28" cy="28" r="23" />
+                            <circle class="ring-fill mem-ring" cx="28" cy="28" r="23" stroke-dasharray="144.5" stroke-dashoffset="86.7" />
+                        </svg>
+                        <span class="ring-label">40%</span>
+                    </div>
+                </div>
+
+                <!-- SQL -->
+                <div class="progress-card">
+                    <div class="progress-card-left">
+                        <div class="progress-icon sql-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                                <ellipse cx="12" cy="7" rx="8" ry="3" stroke="#a855f7" stroke-width="2"/>
+                                <path d="M4 7v5c0 1.66 3.58 3 8 3s8-1.34 8-3V7" stroke="#a855f7" stroke-width="2"/>
+                                <path d="M4 12v5c0 1.66 3.58 3 8 3s8-1.34 8-3v-5" stroke="#a855f7" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div class="progress-info">
+                            <h3>SQL</h3>
+                            <div class="bar">
+                                <div class="fill s" style="--target:55%"></div>
+                            </div>
+                            <p class="pct-label sql-color">55% Completed</p>
+                        </div>
+                    </div>
+                    <div class="progress-ring" data-pct="55">
+                        <svg viewBox="0 0 56 56" width="56" height="56">
+                            <circle class="ring-bg" cx="28" cy="28" r="23" />
+                            <circle class="ring-fill sql-ring" cx="28" cy="28" r="23" stroke-dasharray="144.5" stroke-dashoffset="65" />
+                        </svg>
+                        <span class="ring-label">55%</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- DASHBOARD EXTRAS -->
+    <section class="dashboard-extras">
+
+        <!-- Continue Learning -->
+        <div class="extra-card continue-card">
+            <h2><span class="card-icon">📖</span> Continue Learning</h2>
+
+            <div class="continue-item">
+                <div class="continue-item-icon sql-item-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <ellipse cx="12" cy="7" rx="8" ry="3" stroke="#a855f7" stroke-width="2"/>
+                        <path d="M4 7v5c0 1.66 3.58 3 8 3s8-1.34 8-3V7" stroke="#a855f7" stroke-width="2"/>
+                        <path d="M4 12v5c0 1.66 3.58 3 8 3s8-1.34 8-3v-5" stroke="#a855f7" stroke-width="2"/>
+                    </svg>
+                </div>
+                <div class="continue-text">
+                    <h3>SQL Playground</h3>
+                    <p>Last session: SELECT queries</p>
+                </div>
+                <button class="resume-btn" onclick="window.location.href='/sql'">Resume</button>
+            </div>
+
+            <div class="continue-item">
+                <div class="continue-item-icon algo-item-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="#a855f7" stroke-width="2"/>
+                        <path d="M8 12h8M12 8v8" stroke="#a855f7" stroke-width="2"/>
+                    </svg>
+                </div>
+                <div class="continue-text">
+                    <h3>Algorithm Visualizer</h3>
+                    <p>Sorting Visualizer</p>
+                </div>
+                <button class="resume-btn" onclick="window.location.href='/algorithms'">Resume</button>
+            </div>
+        </div>
+
+        <!-- AI Insight -->
+        <div class="extra-card ai-card">
+            <h2><span class="card-icon">✨</span> AI Insight</h2>
+            <p id="dynamic-ai-msg" class="ai-msg-text"></p>
+            <div class="ai-suggestion">
+                <div class="ai-bulb">💡</div>
+                <p id="ai-suggestion-text">Focus on Memory concepts to strengthen your fundamentals.</p>
+            </div>
+        </div>
+
+        <!-- Learning Streak -->
+        <div class="extra-card streak-card">
+            <h2><span class="card-icon">🔥</span> Learning Streak</h2>
+            <div class="streak-value" id="streak-value">0 Days</div>
+            <p class="streak-msg" id="streak-msg">Start your streak today! 🚀</p>
+            <div class="streak-dots" id="streak-dots"></div>
+        </div>
+
+    </section>
+
+    <!-- MODULES -->
+    <section class="modules">
+
+        <a href="/algorithms" class="module-card">
+            <div class="status-badge green">
+                <span class="status-dot"></span>
+                System Online
+            </div>
+            <div class="module-icon-wrap algo-wrap">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="white" stroke-width="1.5"/>
+                    <path d="M8 12h8M12 8l4 4-4 4" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <h2>Algorithm Visualizer</h2>
+            <p>Visualize sorting and searching algorithms with immersive animations.</p>
+            <div class="mini-bars">
+                <span></span><span></span><span></span><span></span>
+            </div>
+            <div class="launch-btn">Initialize Module</div>
+        </a>
+
+        <a href="/memory" class="module-card">
+            <div class="status-badge green">
+                <span class="status-dot"></span>
+                Optimized
+            </div>
+            <div class="module-icon-wrap mem-wrap">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                    <rect x="2" y="7" width="20" height="10" rx="2" stroke="white" stroke-width="1.5"/>
+                    <line x1="6" y1="7" x2="6" y2="17" stroke="white" stroke-width="1.5"/>
+                    <line x1="10" y1="7" x2="10" y2="17" stroke="white" stroke-width="1.5"/>
+                    <line x1="14" y1="7" x2="14" y2="17" stroke="white" stroke-width="1.5"/>
+                    <line x1="18" y1="7" x2="18" y2="17" stroke="white" stroke-width="1.5"/>
+                </svg>
+            </div>
+            <h2>Memory & CPU Simulator</h2>
+            <p>Understand RAM, Stack, Heap and CPU Scheduling visually.</p>
+            <div class="memory-boxes">
+                <span></span><span></span><span></span><span></span>
+            </div>
+            <div class="launch-btn">Open Simulator</div>
+        </a>
+
+        <a href="/sql" class="module-card recommended">
+            <div class="status-badge pink">
+                <span class="star-icon">★</span>
+                Recommended
+            </div>
+            <div class="module-icon-wrap sql-wrap">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                    <ellipse cx="12" cy="7" rx="8" ry="3" stroke="white" stroke-width="1.5"/>
+                    <path d="M4 7v5c0 1.66 3.58 3 8 3s8-1.34 8-3V7" stroke="white" stroke-width="1.5"/>
+                    <path d="M4 12v5c0 1.66 3.58 3 8 3s8-1.34 8-3v-5" stroke="white" stroke-width="1.5"/>
+                </svg>
+            </div>
+            <h2>SQL Playground</h2>
+            <p>Practice SQL queries with realtime execution and AI help.</p>
+            <div class="sql-terminal">
+                <span class="sql-prompt">›</span> SELECT * FROM students
+            </div>
+            <div class="launch-btn">Run Queries</div>
+        </a>
+
+    </section>
+
+    <script src="{{ url_for('static', filename='js/home/dashboard.js') }}"></script>
+</body>
+</html>
