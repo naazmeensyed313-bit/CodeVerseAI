@@ -109,6 +109,8 @@ CodeVerseAI
 │
 └── OpenAI API Integration
 
+```
+
 ## Learning Objectives
 
 * Understand sorting algorithms visually
