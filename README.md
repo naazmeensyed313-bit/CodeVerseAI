@@ -1,4 +1,4 @@
-# CodeVerseAI – Interactive AI-Powered Computer Science Learning Platform
+# CodeVerseAI – AI-Powered Interactive Learning Platform for Computer Science 
 
 ## Overview
 
