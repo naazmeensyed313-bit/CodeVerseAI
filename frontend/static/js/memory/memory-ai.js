@@ -1,8 +1,22 @@
 import { lessons, tutorFallback } from "./memory-data.js";
 
-export function answerMemoryQuestion(question) {
+export async function answerMemoryQuestion(question) {
     const text = question.trim().toLowerCase();
     if (!text) return "Ask about stack overflow, heap allocation, RAM, fragmentation, or CPU scheduling and I will explain it locally.";
+
+    try {
+        const response = await fetch("/api/memory-tutor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question: question })
+        });
+        if (response.ok) {
+            const data = await response.json();
+            if (data.answer) return data.answer;
+        }
+    } catch (e) {
+        console.info("Memory tutor fallback:", e);
+    }
 
     if (text.includes("stack overflow")) {
         return "Stack overflow happens when a program keeps adding stack frames until the reserved stack space is exhausted. The classic cause is infinite or very deep recursion. Each call keeps return addresses and local variables, so the stack grows until the runtime stops the program.";

@@ -27,7 +27,7 @@ def load_local_env():
             if not line or line.startswith("#") or "=" not in line:
                 continue
             key, value = line.split("=", 1)
-            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+            os.environ[key.strip()] = value.strip().strip('"').strip("'")
 
 
 load_local_env()
@@ -100,15 +100,52 @@ def local_algorithm_answer(selected_algorithm, question, current_step=""):
     return ALGORITHM_NOTES.get(algorithm, ALGORITHM_NOTES["Bubble Sort"])
 
 
-def extract_openai_text(payload):
+def extract_gemini_text(payload):
     try:
-        return payload["choices"][0]["message"]["content"].strip()
-    except (KeyError, IndexError, TypeError):
+        candidates = payload.get("candidates") or []
+        if not candidates:
+            return None
+        parts = candidates[0].get("content", {}).get("parts", [])
+        texts = []
+        for part in parts:
+            if isinstance(part, dict) and "text" in part:
+                texts.append(part["text"])
+        combined = "".join(texts).strip()
+        return combined or None
+    except (AttributeError, TypeError, IndexError, KeyError):
         return None
 
 
-def ask_openai_tutor(selected_algorithm, question, current_step):
-    api_key = os.getenv("OPENAI_API_KEY")
+def get_gemini_api_key():
+    return os.getenv("GEMINI_API_KEY")
+
+
+def get_gemini_model():
+    return os.getenv("GEMINI_MODEL") or "gemini-1.5-flash"
+
+
+
+def _send_gemini_request(req):
+    import time, json, urllib.error
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=120) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+                return extract_gemini_text(payload)
+        except urllib.error.HTTPError as e:
+            if e.code in (503, 429) and attempt < 2:
+                time.sleep(2)
+                continue
+            raise
+        except (TimeoutError, urllib.error.URLError) as e:
+            if attempt < 2:
+                time.sleep(2)
+                continue
+            raise
+    return None
+
+def ask_gemini_tutor(selected_algorithm, question, current_step):
+    api_key = get_gemini_api_key()
     if not api_key:
         return None
 
@@ -141,28 +178,26 @@ Selected Algorithm:
 {user_task}
 """
 
+    model = get_gemini_model()
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     body = json.dumps({
-        "model": os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
-        "messages": [
-            {"role": "system", "content": "You are a helpful DSA tutor."},
-            {"role": "user", "content": prompt},
-        ],
+        "contents": [{
+            "role": "user",
+            "parts": [{"text": prompt}],
+        }],
+        "systemInstruction": {
+            "parts": [{"text": "You are a helpful DSA tutor."}]
+        },
     }).encode("utf-8")
 
     req = urllib.request.Request(
-        "https://api.openai.com/v1/chat/completions",
+        url,
         data=body,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
+        headers={"Content-Type": "application/json"},
         method="POST",
     )
 
-    with urllib.request.urlopen(req, timeout=20) as response:
-        payload = json.loads(response.read().decode("utf-8"))
-
-    return extract_openai_text(payload)
+    return _send_gemini_request(req)
 
 
 @app.route("/")
@@ -187,21 +222,21 @@ def algorithm_tutor():
         return jsonify({"answer": "Ask me a doubt about the current algorithm, comparison, swap, or complexity."})
 
     try:
-        answer = ask_openai_tutor(selected_algorithm, question, current_step)
+        answer = ask_gemini_tutor(selected_algorithm, question, current_step)
     except urllib.error.HTTPError as exc:
         app.logger.warning(
-            "OpenAI algorithm tutor HTTP error %s: %s",
+            "Gemini algorithm tutor HTTP error %s: %s",
             exc.code,
             exc.read().decode("utf-8", errors="ignore")[:500],
         )
         answer = None
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-        app.logger.warning("OpenAI algorithm tutor unavailable: %s", exc)
+        app.logger.warning("Gemini algorithm tutor unavailable: %s", exc)
         answer = None
 
     return jsonify({
         "answer": answer or local_algorithm_answer(selected_algorithm, question, current_step),
-        "source": "openai" if answer else "local",
+        "source": "gemini" if answer else "local",
         "algorithm": target_algorithm,
     })
 
@@ -311,8 +346,8 @@ def local_sql_tutor(action, question, query, error_message, execution_summary):
     )
 
 
-def ask_openai_sql_tutor(action, question, query, error_message, execution_summary):
-    api_key = os.getenv("OPENAI_API_KEY")
+def ask_gemini_sql_tutor(action, question, query, error_message, execution_summary):
+    api_key = get_gemini_api_key()
     if not api_key:
         return None
 
@@ -363,43 +398,26 @@ Action type from UI: {action}
 {user_task}
 """
 
-    preferred_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-    fallback_model = os.getenv("OPENAI_FALLBACK_MODEL", "gpt-4o-mini")
-    models = list(dict.fromkeys([preferred_model, fallback_model]))
+    model = get_gemini_model()
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+    body = json.dumps({
+        "contents": [{
+            "role": "user",
+            "parts": [{"text": prompt}],
+        }],
+        "systemInstruction": {
+            "parts": [{"text": "You are an expert SQL tutor."}]
+        },
+    }).encode("utf-8")
 
-    last_error = None
-    for model in models:
-        body = json.dumps({
-            "model": model,
-            "messages": [
-                {"role": "system", "content": "You are an expert SQL tutor."},
-                {"role": "user", "content": prompt},
-            ],
-        }).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
 
-        req = urllib.request.Request(
-            "https://api.openai.com/v1/chat/completions",
-            data=body,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
-            method="POST",
-        )
-
-        try:
-            with urllib.request.urlopen(req, timeout=25) as response:
-                payload = json.loads(response.read().decode("utf-8"))
-            return extract_openai_text(payload)
-        except urllib.error.HTTPError as exc:
-            last_error = exc
-            if exc.code not in (400, 404):
-                raise
-            app.logger.warning("OpenAI model %s failed for SQL tutor: HTTP %s", model, exc.code)
-
-    if last_error:
-        raise last_error
-    return None
+    return _send_gemini_request(req)
 
 
 @app.route("/api/sql-tutor", methods=["POST"])
@@ -421,28 +439,28 @@ def sql_tutor():
         })
 
     try:
-        answer = ask_openai_sql_tutor(action, question, query, error_message, execution_summary)
+        answer = ask_gemini_sql_tutor(action, question, query, error_message, execution_summary)
     except urllib.error.HTTPError as exc:
         app.logger.warning(
-            "OpenAI SQL tutor HTTP error %s: %s",
+            "Gemini SQL tutor HTTP error %s: %s",
             exc.code,
             exc.read().decode("utf-8", errors="ignore")[:500],
         )
         answer = None
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-        app.logger.warning("OpenAI SQL tutor unavailable: %s", exc)
+        app.logger.warning("Gemini SQL tutor unavailable: %s", exc)
         answer = None
 
     return jsonify({
         "answer": answer or local_sql_tutor(action, question, query, error_message, execution_summary),
-        "source": "openai" if answer else "local",
+        "source": "gemini" if answer else "local",
     })
 
 
 # ── Memory Simulator tutor ────────────────────────────────────────────────────
 
-def ask_openai_memory_tutor(question):
-    api_key = os.getenv("OPENAI_API_KEY")
+def ask_gemini_memory_tutor(question):
+    api_key = get_gemini_api_key()
     if not api_key:
         return None
 
@@ -459,28 +477,26 @@ Rules:
 Student Question: {question}
 """
 
+    model = get_gemini_model()
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     body = json.dumps({
-        "model": os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
-        "messages": [
-            {"role": "system", "content": "You are a helpful OS tutor."},
-            {"role": "user", "content": prompt},
-        ],
+        "contents": [{
+            "role": "user",
+            "parts": [{"text": prompt}],
+        }],
+        "systemInstruction": {
+            "parts": [{"text": "You are a helpful OS tutor."}]
+        },
     }).encode("utf-8")
 
     req = urllib.request.Request(
-        "https://api.openai.com/v1/chat/completions",
+        url,
         data=body,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
+        headers={"Content-Type": "application/json"},
         method="POST",
     )
 
-    with urllib.request.urlopen(req, timeout=20) as response:
-        payload = json.loads(response.read().decode("utf-8"))
-
-    return extract_openai_text(payload)
+    return _send_gemini_request(req)
 
 
 @app.route("/api/memory-tutor", methods=["POST"])
@@ -492,16 +508,76 @@ def memory_tutor():
         return jsonify({"answer": "Ask me about the stack, heap, or how the CPU schedules processes."})
 
     try:
-        answer = ask_openai_memory_tutor(question)
+        answer = ask_gemini_memory_tutor(question)
     except Exception as exc:
-        app.logger.warning("OpenAI memory tutor error: %s", exc)
+        app.logger.warning("Gemini memory tutor error: %s", exc)
         answer = None
 
     return jsonify({
         "answer": answer,
-        "source": "openai" if answer else "local",
+        "source": "gemini" if answer else "local",
     })
 
+
+
+def ask_gemini_dashboard_insight(algo_pct, mem_pct, sql_pct, streak):
+    import json, urllib.request
+    api_key = get_gemini_api_key()
+    if not api_key: return None
+    
+    prompt = f'''
+You are the CodeVerse AI Mentor.
+The user has the following progress:
+- Algorithm Visualizer: {algo_pct}%
+- Memory Simulator: {mem_pct}%
+- SQL Playground: {sql_pct}%
+Current Learning Streak: {streak} days.
+
+Give a short, motivating, and personalized insight.
+Return EXACTLY a JSON object with two keys: "main" and "tip".
+"main": A 2-sentence insight about their progress (use <span class="ai-highlight"> to highlight the module name they should focus on or are doing great at).
+"tip": A 1-sentence actionable tip.
+Do not wrap it in markdown block. Just raw JSON.
+'''
+    model = get_gemini_model()
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+    body = json.dumps({
+        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+        "systemInstruction": {"parts": [{"text": "You are a friendly AI mentor."}]}
+    }).encode("utf-8")
+    
+    req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"}, method="POST")
+    return _send_gemini_request(req)
+
+@app.route("/api/dashboard-insight", methods=["POST"])
+def dashboard_insight():
+    import json
+    data = request.get_json(silent=True) or {}
+    algo = data.get("algorithms", 0)
+    mem = data.get("memory", 0)
+    sql = data.get("sql", 0)
+    streak = data.get("streak", 0)
+    
+    try:
+        answer = ask_gemini_dashboard_insight(algo, mem, sql, streak)
+        if answer:
+            try:
+                if answer.startswith("```json"):
+                    answer = answer[7:]
+                if answer.endswith("```"):
+                    answer = answer[:-3]
+                parsed = json.loads(answer.strip())
+                if "main" in parsed and "tip" in parsed:
+                    return jsonify(parsed)
+            except Exception:
+                pass
+    except Exception as exc:
+        app.logger.warning("Gemini dashboard insight error: %s", exc)
+        
+    return jsonify({
+        "main": f"You are making progress! Focus on building your skills to improve your stats.",
+        "tip": "Keep learning consistently every day."
+    })
 
 if __name__ == "__main__":
     app.run(debug=True)

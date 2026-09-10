@@ -67,10 +67,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     // ── Module progress data (match your actual values) ───────────────────
+    const algoData = JSON.parse(localStorage.getItem("algorithmProgress")) || {};
+    const memData = JSON.parse(localStorage.getItem("memoryProgress")) || {};
+    const sqlAttempts = Number(localStorage.getItem("sqlAttempted") || 0);
+    const sqlCorrect = Number(localStorage.getItem("sqlCorrect") || 0);
+
     const MODULE_PROGRESS = {
-        algorithms: 65,
-        memory: 40,
-        sql: 55
+        algorithms: Math.min(100, Math.round(((algoData.runs || 0) * 5) + ((algoData.correct || 0) * 10))),
+        memory: Math.min(100, Math.round(((memData.actions || 0) * 2) + ((memData.quizCorrect || 0) * 15))),
+        sql: Math.min(100, Math.round((sqlAttempts * 5) + (sqlCorrect * 10)))
     };
 
     // ── 1. Inject SVG gradient defs for ring charts ───────────────────────
@@ -116,58 +121,40 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ── 4. Smart AI Insight (based on actual progress) ────────────────────
-    const lowestModule = Object.entries(MODULE_PROGRESS).sort((a, b) => a[1] - b[1])[0];
-    const highestModule = Object.entries(MODULE_PROGRESS).sort((a, b) => b[1] - a[1])[0];
-
-    const moduleNames = { algorithms: "Algorithm Visualizer", memory: "Memory Simulator", sql: "SQL Playground" };
-    const moduleLinks = { algorithms: "/algorithms", memory: "/memory", sql: "/sql" };
-
-    const insightMessages = [
-        {
-            main: `Your <span class="ai-highlight">${moduleNames[lowestModule[0]]}</span> needs attention — only ${lowestModule[1]}% done. A focused session can boost it significantly.`,
-            tip: `You've made great progress in ${moduleNames[highestModule[0]]} (${highestModule[1]}%). Use that momentum to tackle ${moduleNames[lowestModule[0]]} next.`
-        },
-        {
-            main: `You're ${overall}% through your learning journey. <span class="ai-highlight">${moduleNames[lowestModule[0]]}</span> is your biggest growth opportunity right now.`,
-            tip: `Short daily sessions of 20–30 min on ${moduleNames[lowestModule[0]]} will compound fast. Consistency beats intensity.`
-        },
-        {
-            main: `You learn better with visual simulations. <span class="ai-highlight">${moduleNames[highestModule[0]]}</span> is your strongest area — keep building on it.`,
-            tip: `Focus on ${moduleNames[lowestModule[0]]} concepts to strengthen your fundamentals and reach a balanced 70%+ across all modules.`
-        }
-    ];
-
-    // Rotate insight daily so it feels fresh each visit
-    const dayIndex = new Date().getDate() % insightMessages.length;
-    const chosen = insightMessages[dayIndex];
+    const streakDataObj = JSON.parse(localStorage.getItem("cvai_streak") || "{}");
+    const currentStreakCount = streakDataObj.count || 0;
 
     const aiMsg = document.getElementById("dynamic-ai-msg");
     const aiSuggestion = document.getElementById("ai-suggestion-text");
-
-    if (aiMsg) {
-        // Typewriter effect using plain text first, then reveal HTML
-        const plainText = aiMsg.innerHTML.replace(/<[^>]+>/g, "");
-        const targetHTML = chosen.main;
-        const targetPlain = targetHTML.replace(/<[^>]+>/g, "");
-
-        aiMsg.innerHTML = "";
-        let i = 0;
-
-        function typeWriter() {
-            if (i < targetPlain.length) {
-                aiMsg.textContent = targetPlain.substring(0, i + 1);
-                i++;
-                setTimeout(typeWriter, 20);
-            } else {
-                aiMsg.innerHTML = targetHTML;
+    
+    fetch("/api/dashboard-insight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...MODULE_PROGRESS, streak: currentStreakCount })
+    })
+    .then(r => r.json())
+    .then(chosen => {
+        if (aiMsg) {
+            const targetHTML = chosen.main;
+            const targetPlain = targetHTML.replace(/<[^>]+>/g, "");
+            aiMsg.innerHTML = "";
+            let i = 0;
+            function typeWriter() {
+                if (i < targetPlain.length) {
+                    aiMsg.textContent = targetPlain.substring(0, i + 1);
+                    i++;
+                    setTimeout(typeWriter, 20);
+                } else {
+                    aiMsg.innerHTML = targetHTML;
+                }
             }
+            setTimeout(typeWriter, 800);
         }
-        setTimeout(typeWriter, 800);
-    }
-
-    if (aiSuggestion) {
-        aiSuggestion.textContent = chosen.tip;
-    }
+        if (aiSuggestion) {
+            aiSuggestion.textContent = chosen.tip;
+        }
+    })
+    .catch(e => console.error("Insight error:", e));
 
     // ── 5. Dynamic Learning Streak (localStorage-based, updates daily) ────
     const TODAY = new Date().toDateString();
