@@ -1,0 +1,29 @@
+name: Render Deployment Tracker
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  register-deployment:
+    name: Register Deployment on GitHub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub Deployment
+        uses: bobheadxi/deployments@v1
+        id: deployment
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: production
+
+      - name: Mark Deployment as Successful
+        uses: bobheadxi/deployments@v1
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: success
+          env: production
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+          env_url: 'https://codeverse-ai-v9rn.onrender.com'
